@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 Telegram Casino</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="user-info">
+                <img id="user-avatar" src="https://via.placeholder.com/40" alt="Avatar" class="avatar">
+                <div class="user-details">
+                    <h3 id="user-name">Игрок</h3>
+                    <div class="stars-balance">
+                        <span class="star">⭐</span>
+                        <span id="stars-count">0</span>
+                    </div>
+                </div>
+            </div>
+            <button class="add-stars-btn" onclick="showPaymentModal()">
+                <span class="star">⭐</span>
+                Купить звезды
+            </button>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Games Navigation -->
+            <nav class="games-nav">
+                <button class="nav-btn active" data-game="roulette">
+                    <span class="icon">🎯</span>
+                    Рулетка
+                </button>
+                <button class="nav-btn" data-game="cases">
+                    <span class="icon">📦</span>
+                    Кейсы
+                </button>
+                <button class="nav-btn" data-game="slots">
+                    <span class="icon">🎰</span>
+                    Слоты
+                </button>
+                <button class="nav-btn" data-game="dice">
+                    <span class="icon">🎲</span>
+                    Кости
+                </button>
+            </nav>
+
+            <!-- Game Sections -->
+            <div class="game-section" id="roulette-section">
+                <div class="game-container">
+                    <h2>🎯 Рулетка</h2>
+                    <div class="roulette-container">
+                        <div class="roulette-wheel" id="roulette-wheel">
+                            <div class="roulette-center">
+                                <div class="roulette-pointer"></div>
+                            </div>
+                        </div>
+                        <div class="betting-area">
+                            <div class="bet-options">
+                                <button class="bet-btn" data-bet="red" data-multiplier="2">
+                                    <span class="color red"></span>
+                                    Красное (x2)
+                                </button>
+                                <button class="bet-btn" data-bet="black" data-multiplier="2">
+                                    <span class="color black"></span>
+                                    Черное (x2)
+                                </button>
+                                <button class="bet-btn" data-bet="green" data-multiplier="14">
+                                    <span class="color green"></span>
+                                    Зеленое (x14)
+                                </button>
+                            </div>
+                            <div class="bet-amount">
+                                <label>Ставка:</label>
+                                <input type="number" id="roulette-bet" min="1" value="10">
+                                <span class="star">⭐</span>
+                            </div>
+                            <button class="spin-btn" onclick="spinRoulette()">Крутить!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-section hidden" id="cases-section">
+                <div class="game-container">
+                    <h2>📦 Кейсы</h2>
+                    <div class="cases-container">
+                        <div class="case-grid">
+                            <div class="case-item" data-case="bronze" data-price="10">
+                                <div class="case-icon">🥉</div>
+                                <h3>Бронзовый</h3>
+                                <p>10 ⭐</p>
+                            </div>
+                            <div class="case-item" data-case="silver" data-price="50">
+                                <div class="case-icon">🥈</div>
+                                <h3>Серебряный</h3>
+                                <p>50 ⭐</p>
+                            </div>
+                            <div class="case-item" data-case="gold" data-price="100">
+                                <div class="case-icon">🥇</div>
+                                <h3>Золотой</h3>
+                                <p>100 ⭐</p>
+                            </div>
+                            <div class="case-item" data-case="diamond" data-price="500">
+                                <div class="case-icon">💎</div>
+                                <h3>Алмазный</h3>
+                                <p>500 ⭐</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-section hidden" id="slots-section">
+                <div class="game-container">
+                    <h2>🎰 Слоты</h2>
+                    <div class="slots-container">
+                        <div class="slots-machine">
+                            <div class="slots-reels">
+                                <div class="reel" id="reel1">🍒</div>
+                                <div class="reel" id="reel2">🍒</div>
+                                <div class="reel" id="reel3">🍒</div>
+                            </div>
+                            <div class="slots-controls">
+                                <div class="bet-amount">
+                                    <label>Ставка:</label>
+                                    <input type="number" id="slots-bet" min="1" value="5">
+                                    <span class="star">⭐</span>
+                                </div>
+                                <button class="spin-btn" onclick="spinSlots()">Крутить!</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-section hidden" id="dice-section">
+                <div class="game-container">
+                    <h2>🎲 Кости</h2>
+                    <div class="dice-container">
+                        <div class="dice-area">
+                            <div class="dice" id="dice1">⚀</div>
+                            <div class="dice" id="dice2">⚀</div>
+                        </div>
+                        <div class="dice-betting">
+                            <div class="bet-options">
+                                <button class="bet-btn" data-bet="low" data-multiplier="2">
+                                    Малые (2-6)
+                                </button>
+                                <button class="bet-btn" data-bet="high" data-multiplier="2">
+                                    Большие (8-12)
+                                </button>
+                                <button class="bet-btn" data-bet="seven" data-multiplier="6">
+                                    Семь (x6)
+                                </button>
+                            </div>
+                            <div class="bet-amount">
+                                <label>Ставка:</label>
+                                <input type="number" id="dice-bet" min="1" value="5">
+                                <span class="star">⭐</span>
+                            </div>
+                            <button class="spin-btn" onclick="rollDice()">Бросать!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Payment Modal -->
+        <div class="modal" id="payment-modal">
+            <div class="modal-content">
+                <span class="close" onclick="hidePaymentModal()">&times;</span>
+                <h2>Купить звезды</h2>
+                <div class="payment-options">
+                    <div class="payment-option" data-amount="100" data-stars="100">
+                        <span class="stars">100 ⭐</span>
+                        <span class="price">100 ₽</span>
+                    </div>
+                    <div class="payment-option" data-amount="500" data-stars="550">
+                        <span class="stars">550 ⭐</span>
+                        <span class="price">500 ₽</span>
+                        <span class="bonus">+10% бонус!</span>
+                    </div>
+                    <div class="payment-option" data-amount="1000" data-stars="1200">
+                        <span class="stars">1200 ⭐</span>
+                        <span class="price">1000 ₽</span>
+                        <span class="bonus">+20% бонус!</span>
+                    </div>
+                </div>
+                <button class="payment-btn" onclick="processPayment()">Оплатить</button>
+            </div>
+        </div>
+
+        <!-- Case Opening Modal -->
+        <div class="modal" id="case-modal">
+            <div class="modal-content case-modal-content">
+                <span class="close" onclick="hideCaseModal()">&times;</span>
+                <h2>Открытие кейса</h2>
+                <div class="case-opening">
+                    <div class="case-preview" id="case-preview">
+                        <div class="case-icon">📦</div>
+                    </div>
+                    <div class="case-result" id="case-result">
+                        <div class="prize-icon">🎁</div>
+                        <div class="prize-text">Поздравляем!</div>
+                        <div class="prize-amount">+100 ⭐</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
