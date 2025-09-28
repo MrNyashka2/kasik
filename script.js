@@ -5,6 +5,16 @@ let stars = 0;
 let selectedPayment = null;
 let selectedBet = null;
 
+// User statistics
+let userStats = {
+    gamesPlayed: 0,
+    gamesWon: 0,
+    totalWon: 0,
+    totalLost: 0,
+    referrals: 0,
+    achievements: []
+};
+
 // Initialize Telegram Web App
 function initTelegram() {
     if (tg) {
@@ -22,6 +32,9 @@ function initTelegram() {
         
         // Load user stars from Telegram
         loadUserStars();
+        
+        // Load user statistics
+        loadUserStats();
         
         // Set theme
         if (tg.colorScheme === 'dark') {
@@ -44,6 +57,7 @@ function initTelegram() {
         user = { first_name: 'Тестовый игрок', id: 12345 };
         stars = 1000; // Test stars
         updateStarsDisplay();
+        loadUserStats();
     }
 }
 
@@ -74,6 +88,169 @@ async function saveUserStars() {
         // await fetch('/api/save-stars', { method: 'POST', body: JSON.stringify({ stars }) });
     } catch (error) {
         console.error('Error saving user stars:', error);
+    }
+}
+
+// Load user statistics
+async function loadUserStats() {
+    try {
+        const savedStats = localStorage.getItem('user_stats');
+        if (savedStats) {
+            userStats = { ...userStats, ...JSON.parse(savedStats) };
+        }
+        
+        // Request stats from bot
+        if (tg && tg.initDataUnsafe) {
+            const statsRequest = {
+                type: 'get_stats'
+            };
+            tg.sendData(JSON.stringify(statsRequest));
+        }
+        
+        updateProfileDisplay();
+    } catch (error) {
+        console.error('Error loading user stats:', error);
+    }
+}
+
+// Save user statistics
+async function saveUserStats() {
+    try {
+        localStorage.setItem('user_stats', JSON.stringify(userStats));
+        // In real implementation, you would save to your backend
+        // await fetch('/api/save-stats', { method: 'POST', body: JSON.stringify(userStats) });
+    } catch (error) {
+        console.error('Error saving user stats:', error);
+    }
+}
+
+// Update profile display
+function updateProfileDisplay() {
+    if (user) {
+        document.getElementById('profile-name').textContent = user.first_name || 'Игрок';
+        document.getElementById('profile-user-id').textContent = user.id;
+        document.getElementById('profile-stars').textContent = stars;
+        
+        if (user.photo_url) {
+            document.getElementById('profile-avatar').src = user.photo_url;
+        }
+    }
+    
+    // Update statistics
+    document.getElementById('games-played').textContent = userStats.gamesPlayed;
+    document.getElementById('total-won').textContent = userStats.totalWon;
+    document.getElementById('referrals-count').textContent = userStats.referrals;
+    
+    // Calculate win rate
+    const winRate = userStats.gamesPlayed > 0 ? 
+        Math.round((userStats.gamesWon / userStats.gamesPlayed) * 100) : 0;
+    document.getElementById('win-rate').textContent = winRate + '%';
+    
+    // Update achievements
+    updateAchievements();
+    
+    // Update referral link
+    updateReferralLink();
+}
+
+// Update achievements
+function updateAchievements() {
+    const achievements = document.querySelectorAll('.achievement');
+    
+    // First game achievement
+    if (userStats.gamesPlayed >= 1) {
+        achievements[0].classList.remove('locked');
+        achievements[0].classList.add('unlocked');
+    }
+    
+    // First win achievement
+    if (userStats.gamesWon >= 1) {
+        achievements[1].classList.remove('locked');
+        achievements[1].classList.add('unlocked');
+    }
+    
+    // Gambler achievement (10 games)
+    if (userStats.gamesPlayed >= 10) {
+        achievements[2].classList.remove('locked');
+        achievements[2].classList.add('unlocked');
+    }
+    
+    // Friendly achievement (1 referral)
+    if (userStats.referrals >= 1) {
+        achievements[3].classList.remove('locked');
+        achievements[3].classList.add('unlocked');
+    }
+}
+
+// Update referral link
+function updateReferralLink() {
+    if (user) {
+        const referralLink = `https://t.me/your_bot_username?start=ref_${user.id}`;
+        document.getElementById('referral-link').value = referralLink;
+    }
+}
+
+// Copy referral link
+function copyReferralLink() {
+    const referralInput = document.getElementById('referral-link');
+    referralInput.select();
+    referralInput.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        showMessage('Реферальная ссылка скопирована!', 'success');
+    } catch (err) {
+        // Fallback for modern browsers
+        navigator.clipboard.writeText(referralInput.value).then(() => {
+            showMessage('Реферальная ссылка скопирована!', 'success');
+        }).catch(() => {
+            showMessage('Не удалось скопировать ссылку', 'error');
+        });
+    }
+}
+
+// Open profile section
+function openProfile() {
+    // Hide all game sections
+    const gameSections = document.querySelectorAll('.game-section');
+    gameSections.forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // Remove active class from all nav buttons
+    const navButtons = document.querySelectorAll('.nav-btn');
+    navButtons.forEach(btn => btn.classList.remove('active'));
+    
+    // Show profile section
+    document.getElementById('profile-section').classList.remove('hidden');
+    
+    // Update profile display
+    updateProfileDisplay();
+}
+
+// Record game result
+function recordGameResult(betAmount, winAmount, won) {
+    userStats.gamesPlayed++;
+    userStats.totalLost += betAmount;
+    
+    if (won) {
+        userStats.gamesWon++;
+        userStats.totalWon += winAmount;
+    }
+    
+    saveUserStats();
+    updateProfileDisplay();
+    
+    // Send data to bot
+    if (tg && tg.initDataUnsafe) {
+        const gameData = {
+            type: 'game_result',
+            bet_amount: betAmount,
+            stars_change: won ? winAmount - betAmount : -betAmount,
+            won: won
+        };
+        
+        tg.sendData(JSON.stringify(gameData));
     }
 }
 
@@ -211,9 +388,11 @@ function spinRoulette() {
         if (won) {
             winAmount = Math.floor(betAmount * selectedBet.multiplier);
             stars += winAmount;
-            showMessage(`Выигрыш! +${winAmount} ⭐`, 'success');
+            showMessage(`Поздравляем с выигрышем в ${winAmount} ⭐!`, 'success');
+            recordGameResult(betAmount, winAmount, true);
         } else {
             showMessage(`Проигрыш! Цвет: ${winColor}`, 'error');
+            recordGameResult(betAmount, 0, false);
         }
         
         // Reset UI
@@ -221,7 +400,7 @@ function spinRoulette() {
         spinBtn.disabled = false;
         spinBtn.textContent = 'Крутить!';
         selectedBet = null;
-        document.querySelectorAll('.bet-btn').forEach(btn => btn.classList.remove('selected'));
+        document.querySelectorAll('#roulette-section .bet-btn').forEach(btn => btn.classList.remove('selected'));
         
         updateStarsDisplay();
         saveUserStars();
@@ -296,9 +475,11 @@ function spinSlots() {
             
             if (winAmount > 0) {
                 stars += winAmount;
-                showMessage(`Выигрыш! +${winAmount} ⭐`, 'success');
+                showMessage(`Поздравляем с выигрышем в ${winAmount} ⭐!`, 'success');
+                recordGameResult(betAmount, winAmount, true);
             } else {
                 showMessage('Попробуйте еще раз!', 'error');
+                recordGameResult(betAmount, 0, false);
             }
             
             // Reset UI
@@ -345,6 +526,11 @@ function rollDice() {
     const dice2 = document.getElementById('dice2');
     const diceFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
     
+    if (!dice1 || !dice2) {
+        showMessage('Ошибка: элементы костей не найдены!', 'error');
+        return;
+    }
+    
     dice1.classList.add('rolling');
     dice2.classList.add('rolling');
     
@@ -388,9 +574,11 @@ function rollDice() {
             if (won) {
                 winAmount = Math.floor(betAmount * selectedBet.multiplier);
                 stars += winAmount;
-                showMessage(`Выигрыш! Сумма: ${total}, +${winAmount} ⭐`, 'success');
+                showMessage(`Поздравляем с выигрышем в ${winAmount} ⭐!`, 'success');
+                recordGameResult(betAmount, winAmount, true);
             } else {
                 showMessage(`Проигрыш! Сумма: ${total}`, 'error');
+                recordGameResult(betAmount, 0, false);
             }
             
             // Reset UI
@@ -441,12 +629,17 @@ function showCaseModal(caseType, price) {
     
     modal.style.display = 'block';
     
-    // Simulate opening after delay
+    // Calculate prize first (bot knows the result)
+    const prize = calculateCasePrize(caseType, price);
+    
+    // Start spinning animation
+    startPrizeSpinning(result, prize, price);
+    
+    // Show final result after spinning
     setTimeout(() => {
-        const prize = calculateCasePrize(caseType, price);
-        
         // Show result
         result.querySelector('.prize-amount').textContent = `+${prize} ⭐`;
+        result.querySelector('.prize-icon').textContent = prize >= price ? '🏆' : '⭐';
         result.classList.add('show');
         
         // Add prize to stars
@@ -454,27 +647,86 @@ function showCaseModal(caseType, price) {
         updateStarsDisplay();
         saveUserStars();
         
-        showMessage(`Получено: ${prize} ⭐`, 'success');
-    }, 2000);
+        if (prize >= price) {
+            showMessage(`🎉 Поздравляем с выигрышем в ${prize} ⭐! (Окупа!)`, 'success');
+        } else if (prize > 0) {
+            showMessage(`Поздравляем с выигрышем в ${prize} ⭐!`, 'success');
+        } else {
+            showMessage(`К сожалению, вы ничего не выиграли`, 'error');
+        }
+    }, 3000);
+}
+
+function startPrizeSpinning(resultElement, finalPrize, casePrice) {
+    const prizeElement = resultElement.querySelector('.prize-amount');
+    const prizeIcon = resultElement.querySelector('.prize-icon');
+    
+    // Create spinning effect with random prizes
+    const possiblePrizes = [
+        Math.floor(casePrice * 0.1),
+        Math.floor(casePrice * 0.2),
+        Math.floor(casePrice * 0.3),
+        Math.floor(casePrice * 0.5),
+        Math.floor(casePrice * 0.8),
+        casePrice,
+        Math.floor(casePrice * 1.5),
+        Math.floor(casePrice * 2.0),
+        Math.floor(casePrice * 3.0)
+    ];
+    
+    const possibleIcons = ['⭐', '💰', '💎', '🏆', '🎁', '💵', '💸', '💳', '🪙'];
+    
+    let spinCount = 0;
+    let spinSpeed = 50; // Начальная скорость
+    
+    const spinInterval = setInterval(() => {
+        const randomPrize = possiblePrizes[Math.floor(Math.random() * possiblePrizes.length)];
+        const randomIcon = possibleIcons[Math.floor(Math.random() * possibleIcons.length)];
+        
+        prizeElement.textContent = `+${randomPrize} ⭐`;
+        prizeIcon.textContent = randomIcon;
+        
+        spinCount++;
+        
+        // Замедляем прокрутку
+        if (spinCount > 15) {
+            spinSpeed += 20;
+        }
+        
+        // Останавливаемся
+        if (spinCount > 25) {
+            clearInterval(spinInterval);
+            
+            // Final result
+            prizeElement.textContent = `+${finalPrize} ⭐`;
+            prizeIcon.textContent = finalPrize >= casePrice ? '🏆' : '⭐';
+        }
+    }, spinSpeed);
 }
 
 function calculateCasePrize(caseType, price) {
-    const baseMultiplier = {
-        bronze: 0.5,
-        silver: 1.2,
-        gold: 2.0,
-        diamond: 5.0
-    };
+    const random = Math.random();
     
-    const multiplier = baseMultiplier[caseType];
-    const basePrize = Math.floor(price * multiplier);
+    // 5% шанс на окупа или больше
+    if (random < 0.05) {
+        const profitMultiplier = 1.0 + Math.random() * 2.0; // 1x to 3x
+        return Math.floor(price * profitMultiplier);
+    }
     
-    // Add some randomness
-    const randomFactor = 0.5 + Math.random() * 1.0; // 0.5x to 1.5x
-    const finalPrize = Math.floor(basePrize * randomFactor);
+    // 15% шанс на минимальную сумму (30-50% от цены)
+    if (random < 0.20) {
+        const minMultiplier = 0.3 + Math.random() * 0.2; // 0.3x to 0.5x
+        return Math.floor(price * minMultiplier);
+    }
     
-    // Minimum prize
-    return Math.max(finalPrize, Math.floor(price * 0.3));
+    // 80% шанс на 0 или очень маленькую сумму
+    if (random < 0.95) {
+        const tinyMultiplier = Math.random() * 0.1; // 0x to 0.1x
+        return Math.floor(price * tinyMultiplier);
+    }
+    
+    // 5% шанс на полный окупа
+    return price;
 }
 
 function hideCaseModal() {
@@ -542,6 +794,17 @@ function simulatePaymentSuccess() {
     saveUserStars();
     hidePaymentModal();
     showMessage(`Получено ${selectedPayment.stars} ⭐!`, 'success');
+    
+    // Send purchase data to bot
+    if (tg && tg.initDataUnsafe) {
+        const purchaseData = {
+            type: 'purchase',
+            stars: selectedPayment.stars,
+            amount: selectedPayment.amount
+        };
+        
+        tg.sendData(JSON.stringify(purchaseData));
+    }
 }
 
 // Close modals when clicking outside

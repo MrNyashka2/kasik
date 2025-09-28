@@ -11,7 +11,7 @@
     <div class="app-container">
         <!-- Header -->
         <header class="header">
-            <div class="user-info">
+            <div class="user-info" onclick="openProfile()">
                 <img id="user-avatar" src="https://via.placeholder.com/40" alt="Avatar" class="avatar">
                 <div class="user-details">
                     <h3 id="user-name">Игрок</h3>
@@ -31,6 +31,10 @@
         <main class="main-content">
             <!-- Games Navigation -->
             <nav class="games-nav">
+                <button class="nav-btn" data-game="profile">
+                    <span class="icon">👤</span>
+                    Профиль
+                </button>
                 <button class="nav-btn active" data-game="roulette">
                     <span class="icon">🎯</span>
                     Рулетка
@@ -50,6 +54,116 @@
             </nav>
 
             <!-- Game Sections -->
+            <div class="game-section hidden" id="profile-section">
+                <div class="game-container">
+                    <h2>👤 Профиль игрока</h2>
+                    <div class="profile-container">
+                        <div class="profile-header">
+                            <div class="profile-avatar">
+                                <img id="profile-avatar" src="https://via.placeholder.com/80" alt="Avatar" class="avatar-large">
+                                <div class="profile-level">
+                                    <span class="level-badge">Уровень 1</span>
+                                </div>
+                            </div>
+                            <div class="profile-info">
+                                <h3 id="profile-name">Игрок</h3>
+                                <p class="profile-id">ID: <span id="profile-user-id">12345</span></p>
+                                <div class="profile-balance">
+                                    <span class="star">⭐</span>
+                                    <span id="profile-stars">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">🎮</div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="games-played">0</div>
+                                    <div class="stat-label">Игр сыграно</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">🏆</div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="total-won">0</div>
+                                    <div class="stat-label">Всего выиграно</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">📈</div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="win-rate">0%</div>
+                                    <div class="stat-label">Процент побед</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">👥</div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="referrals-count">0</div>
+                                    <div class="stat-label">Рефералов</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="referral-section">
+                            <h3>🔗 Реферальная программа</h3>
+                            <div class="referral-info">
+                                <p>Приглашайте друзей и получайте бонусы!</p>
+                                <div class="referral-link-container">
+                                    <input type="text" id="referral-link" readonly class="referral-input">
+                                    <button class="copy-btn" onclick="copyReferralLink()">📋</button>
+                                </div>
+                                <div class="referral-rewards">
+                                    <div class="reward-item">
+                                        <span class="reward-icon">🎁</span>
+                                        <span>За каждого реферала: +50 ⭐</span>
+                                    </div>
+                                    <div class="reward-item">
+                                        <span class="reward-icon">🎁</span>
+                                        <span>Реферал получает: +25 ⭐</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="achievements-section">
+                            <h3>🏅 Достижения</h3>
+                            <div class="achievements-grid" id="achievements-grid">
+                                <div class="achievement locked">
+                                    <div class="achievement-icon">🎯</div>
+                                    <div class="achievement-text">
+                                        <div class="achievement-title">Первая игра</div>
+                                        <div class="achievement-desc">Сыграйте первую игру</div>
+                                    </div>
+                                </div>
+                                <div class="achievement locked">
+                                    <div class="achievement-icon">💰</div>
+                                    <div class="achievement-text">
+                                        <div class="achievement-title">Первая победа</div>
+                                        <div class="achievement-desc">Выиграйте первую игру</div>
+                                    </div>
+                                </div>
+                                <div class="achievement locked">
+                                    <div class="achievement-icon">🎰</div>
+                                    <div class="achievement-text">
+                                        <div class="achievement-title">Азартный игрок</div>
+                                        <div class="achievement-desc">Сыграйте 10 игр</div>
+                                    </div>
+                                </div>
+                                <div class="achievement locked">
+                                    <div class="achievement-icon">👥</div>
+                                    <div class="achievement-text">
+                                        <div class="achievement-title">Дружелюбный</div>
+                                        <div class="achievement-desc">Пригласите 1 друга</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="game-section" id="roulette-section">
                 <div class="game-container">
                     <h2>🎯 Рулетка</h2>
